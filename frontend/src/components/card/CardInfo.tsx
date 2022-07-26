@@ -8,7 +8,7 @@ import { up} from "../../utils";
 export function CardInfo({connectWallet, cardInfo, upAnimation = false}) {
     const card: CardInfoModel = cardInfo;
     return (
-        <div className="onboard-container">
+        <div className="card-container">
             {card.animation &&
                 <div className="animation">
                     <Lottie

@@ -1,3 +1,14 @@
 body {
     margin: 0;
+    background: rgba(0, 0, 0, .05);
+}
+
+.card-container {
+    box-shadow: 10px 10px 30px rgba(0, 0, 0, .1);
+    background: white;
+    border-radius: .7em;
+    padding: 3rem;
+    max-width: 500px;
+    text-align: center;
+    margin: 5rem auto 0 auto;
 }
