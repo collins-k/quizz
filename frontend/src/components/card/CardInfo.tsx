@@ -3,22 +3,23 @@ import Lottie from "react-lottie-player";
 
 import {CardInfoModel} from "../../models/CardInfoModel";
 import './card.css';
-import {identity, up} from "../../utils";
+import { up} from "../../utils";
 
 export function CardInfo({connectWallet, cardInfo, upAnimation = false}) {
     const card: CardInfoModel = cardInfo;
     return (
         <div className="onboard-container">
-            <div className="animation">
-                <Lottie
-                    loop={false}
-                    animationData={identity}
-                    play
-                    speed={1}
-                    style={{width: 200, height: 200}}
-                />
-            </div>
-            { upAnimation &&
+            {card.animation &&
+                <div className="animation">
+                    <Lottie
+                        loop={false}
+                        animationData={card.animation}
+                        play
+                        speed={1}
+                        style={{width: 200, height: 200}}
+                    />
+                </div>}
+            {upAnimation &&
                 <div className="up">
                     <Lottie
                         loop
