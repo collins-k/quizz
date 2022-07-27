@@ -18,6 +18,7 @@ import {TransactionErrorMessage} from "./TransactionErrorMessage";
 import {WaitingForTransactionMessage} from "./WaitingForTransactionMessage";
 import {Navbar} from "./Navbar";
 import {Response} from "./Response";
+import {CreateQuiz} from "./CreateQuiz";
 
 // This is the Hardhat Network id that we set in our hardhat.config.js.
 // Here's a list of network ids https://docs.metamask.io/guide/ethereum-provider.html#properties
@@ -130,7 +131,7 @@ export class Dapp extends React.Component<{}, IState> {
                             <Response></Response>
                         </div>
                         <div className="tab-pane fade" id="create-tab-pane" role="tabpanel" aria-labelledby="create-tab"
-                             tabIndex={0}>Create Quiz
+                             tabIndex={1}><CreateQuiz />
                         </div>
                         <div className="tab-pane fade" id="closed-quiz-tab-pane" role="tabpanel"
                              aria-labelledby="closed-quiz-tab"

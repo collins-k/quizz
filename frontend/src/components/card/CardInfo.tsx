@@ -32,7 +32,7 @@ export function CardInfo({connectWallet, cardInfo, upAnimation = false}) {
             }
             <h3>{card.title}</h3>
             <p className="desc"> {card.description}</p>
-            <button className="btn btn-primary btn-onboard"
+            <button className="btn btn-primary btn-lg btn-onboard"
                     onClick={connectWallet}> {card.buttonText}
             </button>
         </div>
