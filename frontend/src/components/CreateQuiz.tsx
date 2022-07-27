@@ -25,7 +25,7 @@ export function CreateQuiz({}) {
             <form onSubmit={handleSubmit}>
                 <Field name="question" value={formData.question} onChange={handleChange}>Question</Field>
                 <Field name="response" value={formData.response} onChange={handleChange}>Response</Field>
-                <button className="btn btn-primary btn-lg mt-4 w-100 text-left">Add Question</button>
+                <button className="btn btn-primary btn-lg mt-4 w-100">Add Question</button>
             </form>
         </div>
     )

@@ -2,8 +2,8 @@ import React from "react";
 import Lottie from "react-lottie-player";
 
 import {CardInfoModel} from "../../models/CardInfoModel";
-import './card.css';
-import { up} from "../../utils";
+import './card.scss';
+import {up} from "../../utils";
 
 export function CardInfo({connectWallet, cardInfo, upAnimation = false}) {
     const card: CardInfoModel = cardInfo;
