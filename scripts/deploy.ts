@@ -1,8 +1,8 @@
 // This is a script for deploying your contracts. You can adapt it to deploy
 // yours, or create new ones.
+import "@nomiclabs/hardhat-ethers";
 import { artifacts, ethers, network } from "hardhat";
-
-import path from "path";
+import path = require("path");
 
 async function main() {
   // This is just a convenience check
@@ -23,17 +23,17 @@ async function main() {
 
   console.log("Account balance:", (await deployer.getBalance()).toString());
 
-  const Token = await ethers.getContractFactory("Token");
-  const token = await Token.deploy();
-  await token.deployed();
+  const QuizFactory = await ethers.getContractFactory("QuizFactory");
+  const QuizFactoryDeployed = await QuizFactory.deploy();
+  await QuizFactoryDeployed.deployed();
 
-  console.log("Token address:", token.address);
+  console.log("QuizFactory address:", QuizFactoryDeployed.address);
 
   // We also save the contract's artifacts and address in the frontend directory
-  saveFrontendFiles(token);
+  saveFrontendFiles(QuizFactoryDeployed);
 }
 
-function saveFrontendFiles(token: any) {
+function saveFrontendFiles(QuizFactory: any) {
   const fs = require("fs");
   const contractsDir = path.join(__dirname, "..", "frontend", "src", "contracts");
 
@@ -43,14 +43,14 @@ function saveFrontendFiles(token: any) {
 
   fs.writeFileSync(
     path.join(contractsDir, "contract-address.json"),
-    JSON.stringify({ Token: token.address }, undefined, 2)
+    JSON.stringify({ QuizFactory: QuizFactory.address }, undefined, 2)
   );
 
-  const TokenArtifact = artifacts.readArtifactSync("Token");
+  const QuizFactoryArtifact = artifacts.readArtifactSync("QuizFactory");
 
   fs.writeFileSync(
-    path.join(contractsDir, "Token.json"),
-    JSON.stringify(TokenArtifact, null, 2)
+    path.join(contractsDir, "QuizFactory.json"),
+    JSON.stringify(QuizFactoryArtifact, null, 2)
   );
 }
 
