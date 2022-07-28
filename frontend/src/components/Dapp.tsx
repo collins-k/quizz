@@ -12,12 +12,13 @@ import contractAddress from "../contracts/contract-address.json";
 // All the logic of this dapp is contained in the Dapp component.
 import {NoWalletDetected} from "./NoWalletDetected";
 import {ConnectWallet} from "./ConnectWallet";
-import {Loading} from "./Loading";
 import {TransactionErrorMessage} from "./TransactionErrorMessage";
 import {WaitingForTransactionMessage} from "./WaitingForTransactionMessage";
 import {Navbar} from "./Navbar";
-import {Response} from "./Response";
+import {AnswerQuiz} from "./AnswerQuiz";
 import {CreateQuiz} from "./CreateQuiz";
+import {QuizData} from "../models/QuizData";
+import {Loading} from "./Loading";
 
 // This is the Hardhat Network id that we set in our hardhat.config.js.
 // Here's a list of network ids https://docs.metamask.io/guide/ethereum-provider.html#properties
@@ -29,7 +30,8 @@ const ERROR_CODE_TX_REJECTED_BY_USER = 4001;
 
 interface IState {
     selectedAddress?: string;
-    balance?: ethers.BigNumber;
+    question?: string;
+    loading?: boolean;
     txBeingSent?: string;
     transactionError?: Error;
     networkError?: string;
@@ -67,7 +69,7 @@ export class Dapp extends React.Component<{}, IState> {
         this.state = this.initialState;
         // We make sure that the following functions don't their context
         this.addQuiz = this.addQuiz.bind(this);
-        this.getQuestion = this.getQuestion.bind(this);
+        this.loadQuestion = this.loadQuestion.bind(this);
         this._connectWallet = this._connectWallet.bind(this);
         this._initialize = this._initialize.bind(this);
         this._initializeEthers = this._initializeEthers.bind(this);
@@ -102,6 +104,11 @@ export class Dapp extends React.Component<{}, IState> {
             );
         }
 
+        // If the token data or the user's balance hasn't loaded yet, we show
+        // a loading component.
+        if (this.state.loading) {
+            return <Loading/>;
+        }
         // If everything is loaded, we render the application.
         return (
             <>
@@ -146,7 +153,7 @@ export class Dapp extends React.Component<{}, IState> {
                         <div className="tab-pane fade show active" id="quiz-tab-pane" role="tabpanel"
                              aria-labelledby="quiz-tab"
                              tabIndex={0}>
-                            <Response></Response>
+                            <AnswerQuiz question={this.state.question}></AnswerQuiz>
                         </div>
                         <div className="tab-pane fade" id="create-tab-pane" role="tabpanel" aria-labelledby="create-tab"
                              tabIndex={1}><CreateQuiz addQuiz={this.addQuiz}/>
@@ -210,7 +217,8 @@ export class Dapp extends React.Component<{}, IState> {
 
         // Fetching the token data and the user's balance are specific to this
         // sample project, but you can reuse the same initialization pattern.
-        this._initializeEthers();
+        this._initializeEthers().then();
+        this.loadQuestion().then();
     }
 
     async _initializeEthers() {
@@ -264,6 +272,8 @@ export class Dapp extends React.Component<{}, IState> {
                 // was mined, so we throw this generic one.
                 throw new Error("Transaction failed");
             }
+            // Load the next question
+            this.loadQuestion().then();
 
             // If we got here, the transaction was successful, so you may want to
             // update your state. Here, we update the user's balance.
@@ -285,6 +295,28 @@ export class Dapp extends React.Component<{}, IState> {
         }
     }
 
+    async loadQuestion() {
+        this.setState({loading: true})
+        const questionAddresses: any[] = await this._quiz.getQuizzes();
+        let question = "No questions found On-Chain";
+        this.setState({question})
+
+        for (let i = 0; i < questionAddresses.length; i++) {
+            let qContract = new ethers.Contract(
+                questionAddresses[i],
+                QuizGameArtefact.abi,
+                this._provider.getSigner(0)
+            );
+            const quest = await qContract.question();
+            const solved = await qContract.solved();
+            if (!solved) {
+                question = quest;
+                break
+            }
+        }
+        this.setState({question, loading: false})
+    }
+
     // This method just clears part of the state.
     _dismissTransactionError() {
         this.setState({transactionError: undefined});
@@ -295,7 +327,7 @@ export class Dapp extends React.Component<{}, IState> {
         this.setState({networkError: undefined});
     }
 
-    // This is an utility method that turns an RPC error into a human readable
+    // This is an utility method that turns an RPC error into a human-readable
     // message.
     _getRpcErrorMessage(error) {
         if (error.data) {
