@@ -5,12 +5,11 @@ import {ethers} from "ethers";
 
 // We import the contract's artifacts and address here, as we are going to be
 // using them with ethers
-import TokenArtifact from "../contracts/Token.json";
+import QuizGameArtefact from "../contracts/QuizGame.json";
+import QuizFactoryArtefact from "../contracts/QuizFactory.json";
 import contractAddress from "../contracts/contract-address.json";
 
 // All the logic of this dapp is contained in the Dapp component.
-// These other components are just presentational ones: they don't have any
-// logic. They just render HTML.
 import {NoWalletDetected} from "./NoWalletDetected";
 import {ConnectWallet} from "./ConnectWallet";
 import {Loading} from "./Loading";
@@ -42,19 +41,16 @@ declare let window: any;
 
 // This component is in charge of doing these things:
 //   1. It connects to the user's wallet
-//   2. Initializes ethers and the Token contract
+//   2. Initializes ethers and the QuizFactory contract
 //   3. Polls the user balance to keep it updated.
-//   4. Transfers tokens by sending transactions
-//   5. Renders the whole application
+//   4. Create quizzes by sending transactions
+//   5. Fetch the next available quiz
+//   6. Renders the whole application
 //
-// Note that (3) and (4) are specific of this sample application, but they show
-// you how to keep your Dapp and contract's state in sync,  and how to send a
-// transaction.
 export class Dapp extends React.Component<{}, IState> {
     // We store multiple things in Dapp's state.
-    // You don't need to follow this pattern, but it's an useful example.
     initialState = {
-        // The user's address and balance
+        // The user's address
         selectedAddress: undefined,
         // The ID about transactions being sent, and any possible error with them
         txBeingSent: undefined,
@@ -63,23 +59,34 @@ export class Dapp extends React.Component<{}, IState> {
     };
     // We'll use ethers to interact with the Ethereum network and our contract
     private _provider: ethers.providers.Web3Provider;
-    private _token: any;
+    private _quiz: any;
 
     constructor(props) {
         super(props);
 
         this.state = this.initialState;
+        // We make sure that the following functions don't their context
+        this.addQuiz = this.addQuiz.bind(this);
+        this.getQuestion = this.getQuestion.bind(this);
+        this._connectWallet = this._connectWallet.bind(this);
+        this._initialize = this._initialize.bind(this);
+        this._initializeEthers = this._initializeEthers.bind(this);
+        this._dismissTransactionError = this._dismissTransactionError.bind(this);
+        this._dismissNetworkError = this._dismissNetworkError.bind(this);
+        this._getRpcErrorMessage = this._getRpcErrorMessage.bind(this);
+        this._resetState = this._resetState.bind(this);
+        this._checkNetwork = this._checkNetwork.bind(this);
     }
 
     render() {
-        // Ethereum wallets inject the window.ethereum object. If it hasn't been
+        // Ethereum's wallets inject the window.ethereum object. If it hasn't been
         // injected, we instruct the user to install MetaMask.
         if (window.ethereum === undefined) {
             return <NoWalletDetected/>;
         }
 
         // The next thing we need to do, is to ask the user to connect their wallet.
-        // When the wallet gets connected, we are going to save the users's address
+        // When the wallet gets connected, we are going to save the user's address
         // in the component's state. So, if it hasn't been saved yet, we have
         // to show the ConnectWallet component.
         //
@@ -124,6 +131,17 @@ export class Dapp extends React.Component<{}, IState> {
                             </button>
                         </li>
                     </ul>
+                    {this.state.txBeingSent && (
+                        <WaitingForTransactionMessage txHash={this.state.txBeingSent}/>
+                    )}
+
+                    {this.state.transactionError && (
+                        <TransactionErrorMessage
+                            message={this._getRpcErrorMessage(this.state.transactionError)}
+                            dismiss={() => this._dismissTransactionError()}
+                        />
+                    )}
+
                     <div className="tab-content" id="myTabContent">
                         <div className="tab-pane fade show active" id="quiz-tab-pane" role="tabpanel"
                              aria-labelledby="quiz-tab"
@@ -131,35 +149,11 @@ export class Dapp extends React.Component<{}, IState> {
                             <Response></Response>
                         </div>
                         <div className="tab-pane fade" id="create-tab-pane" role="tabpanel" aria-labelledby="create-tab"
-                             tabIndex={1}><CreateQuiz />
+                             tabIndex={1}><CreateQuiz addQuiz={this.addQuiz}/>
                         </div>
                         <div className="tab-pane fade" id="closed-quiz-tab-pane" role="tabpanel"
                              aria-labelledby="closed-quiz-tab"
                              tabIndex={0}>Closed Quiz
-                        </div>
-                    </div>
-
-                    <div className="row">
-                        <div className="col-12">
-                            {/*
-              Sending a transaction isn't an immediate action. You have to wait
-              for it to be mined.
-              If we are waiting for one, we show a message here.
-            */}
-                            {this.state.txBeingSent && (
-                                <WaitingForTransactionMessage txHash={this.state.txBeingSent}/>
-                            )}
-
-                            {/*
-              Sending a transaction can fail in multiple ways.
-              If that happened, we show a message here.
-            */}
-                            {this.state.transactionError && (
-                                <TransactionErrorMessage
-                                    message={this._getRpcErrorMessage(this.state.transactionError)}
-                                    dismiss={() => this._dismissTransactionError()}
-                                />
-                            )}
                         </div>
                     </div>
                 </div>
@@ -225,9 +219,9 @@ export class Dapp extends React.Component<{}, IState> {
 
         // Then, we initialize the contract using that provider and the token's
         // artifact. You can do this same thing with your contracts.
-        this._token = new ethers.Contract(
-            contractAddress.Token,
-            TokenArtifact.abi,
+        this._quiz = new ethers.Contract(
+            contractAddress.QuizFactory,
+            QuizFactoryArtefact.abi,
             this._provider.getSigner(0)
         );
     }
@@ -235,7 +229,7 @@ export class Dapp extends React.Component<{}, IState> {
     // This method sends an ethereum transaction to transfer tokens.
     // While this action is specific to this application, it illustrates how to
     // send a transaction.
-    async _transferTokens(to, amount) {
+    async addQuiz(data: QuizData) {
         // Sending a transaction is a complex operation:
         //   - The user can reject it
         //   - It can fail before reaching the ethereum network (i.e. if the user
@@ -257,7 +251,7 @@ export class Dapp extends React.Component<{}, IState> {
 
             // We send the transaction, and save its hash in the Dapp's state. This
             // way we can indicate that we are waiting for it to be mined.
-            const tx = await this._token.transfer(to, amount);
+            const tx = await this._quiz.createQuiz(data.question, data.answer);
             this.setState({txBeingSent: tx.hash});
 
             // We use .wait() to wait for the transaction to be mined. This method
