@@ -10,7 +10,7 @@ export function Loading() {
                     loop
                     animationData={loader}
                     play
-                    speed={2}
+                    speed={2.5}
                     style={{width: 200, height: 200}}
                 />
             </div>

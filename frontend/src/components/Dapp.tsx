@@ -117,7 +117,7 @@ export class Dapp extends React.Component<{}, IState> {
                 <Navbar address={this.state.selectedAddress}
                         networkName={"Localhost 8545"}/>
                 <div className="container">
-                    <ul className="nav nav-tabs" id="myTab" role="tablist">
+                    <ul className="nav nav-tabs justify-content-center" id="myTab" role="tablist">
                         <li className="nav-item" role="presentation">
                             <button className="nav-link active" id="quiz-tab" data-bs-toggle="tab"
                                     data-bs-target="#quiz-tab-pane"
