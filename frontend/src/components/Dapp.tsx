@@ -19,6 +19,7 @@ import {AnswerQuiz} from "./AnswerQuiz";
 import {CreateQuiz} from "./CreateQuiz";
 import {QuizData} from "../models/QuizData";
 import {Loading} from "./Loading";
+import {QuizNotFound} from "./QuizNotFound";
 
 // This is the Hardhat Network id that we set in our hardhat.config.js.
 // Here's a list of network ids https://docs.metamask.io/guide/ethereum-provider.html#properties
@@ -54,6 +55,7 @@ export class Dapp extends React.Component<{}, IState> {
     initialState = {
         // The user's address
         selectedAddress: undefined,
+        question: undefined,
         // The ID about transactions being sent, and any possible error with them
         txBeingSent: undefined,
         transactionError: undefined,
@@ -153,7 +155,10 @@ export class Dapp extends React.Component<{}, IState> {
                         <div className="tab-pane fade show active" id="quiz-tab-pane" role="tabpanel"
                              aria-labelledby="quiz-tab"
                              tabIndex={0}>
-                            <AnswerQuiz question={this.state.question}></AnswerQuiz>
+                            { this.state.question ?
+                                <AnswerQuiz question={this.state.question}></AnswerQuiz>
+                                : <QuizNotFound/>
+                            }
                         </div>
                         <div className="tab-pane fade" id="create-tab-pane" role="tabpanel" aria-labelledby="create-tab"
                              tabIndex={1}><CreateQuiz addQuiz={this.addQuiz}/>
@@ -296,10 +301,8 @@ export class Dapp extends React.Component<{}, IState> {
     }
 
     async loadQuestion() {
-        this.setState({loading: true})
+        this.setState({question: undefined, loading: true})
         const questionAddresses: any[] = await this._quiz.getQuizzes();
-        let question = "No questions found On-Chain";
-        this.setState({question})
 
         for (let i = 0; i < questionAddresses.length; i++) {
             let qContract = new ethers.Contract(
@@ -310,11 +313,11 @@ export class Dapp extends React.Component<{}, IState> {
             const quest = await qContract.question();
             const solved = await qContract.solved();
             if (!solved) {
-                question = quest;
+                this.setState({question: quest})
                 break
             }
         }
-        this.setState({question, loading: false})
+        this.setState({loading: false})
     }
 
     // This method just clears part of the state.
@@ -334,7 +337,7 @@ export class Dapp extends React.Component<{}, IState> {
             return error.data.message;
         }
 
-        return error.message;
+        return JSON.stringify(error.message).split('message')[2].replace(/[^a-zA-Z0-9' ]/g, "");
     }
 
     // This method resets the state
