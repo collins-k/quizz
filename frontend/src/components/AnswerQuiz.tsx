@@ -1,27 +1,67 @@
-import {Field} from "./forms/Fields";
-import {useEffect, useState} from "react";
+import {useState} from "react";
 
-export function AnswerQuiz({question}) {
+export function AnswerQuiz({quiz, submitGuess, fund}) {
 
-    const [response, setResponse] = useState("");
+    const [answer, setAnswer] = useState("");
+    const [funding, setFunding] = useState(0);
 
     function handleChange(event) {
-        setResponse(event.target.value);
+        setAnswer(event.target.value);
     }
 
-    function handleSubmit(event) {
+    function handleFundChange(event) {
+        setFunding(event.target.value);
+    }
+
+    function handleResponseSubmit(event) {
         event.preventDefault();
-        console.log(response)
+        submitGuess(answer);
+        setAnswer("");
+    }
+
+    function handleFundSubmit(event) {
+        event.preventDefault();
+        fund(funding);
+        setFunding(0);
     }
 
     return (
         <div className="card-container text-center">
-            <div className="mb-3">
-                <h2>{question}</h2>
+            <div className="mb-4">
+                <h2>{quiz.question}</h2>
+                <p className="text-muted">
+                    <small className="fst-italic">Balance: </small>
+                    <span className="fw-semibold">{quiz.balance} ETH</span>
+                </p>
             </div>
-            <form onSubmit={handleSubmit}>
-                <Field name="Response" value={response} onChange={handleChange}></Field>
-            </form>
+            <div className="grid gap-1 align-items-center justify-items-start mb-5">
+                <input
+                    type="text"
+                    id="answer"
+                    name="answer"
+                    value={answer}
+                    onChange={handleChange}
+                    className="form-control g-col-12 g-col-sm-9"
+                />
+                <button className="btn btn-primary g-col-12 g-col-sm-3" onClick={handleResponseSubmit} disabled={!answer}>Submit</button>
+            </div>
+            <div className="grid gap-1 align-items-center justify-items-start">
+                <label htmlFor={answer} className="g-col-12 text-muted text-start">
+                    {
+                       quiz.balance === 0 ?
+                           "You have to fund the question before answering"  :
+                           "You can add some ethers to this question"
+                    } </label>
+                <input
+                    type="number"
+                    id="funding"
+                    name="funding"
+                    value={funding}
+                    onChange={handleFundChange}
+                    className="form-control g-col-12 g-col-sm-9"
+                />
+                <button className="btn btn-primary g-col-12 g-col-sm-3" onClick={handleFundSubmit} disabled={funding <= 0}>Fund</button>
+            </div>
         </div>
     )
 }

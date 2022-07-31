@@ -1,6 +1,7 @@
 // Variable overrides first
 $primary: #5358FD;
 $enable-shadows: true;
+$enable-cssgrid: true;
 
 // Then import Bootstrap
 @import "../node_modules/bootstrap/scss/bootstrap";

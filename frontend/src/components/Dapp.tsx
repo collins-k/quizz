@@ -53,6 +53,8 @@ declare let window: any;
 export class Dapp extends React.Component<{}, IState> {
     // We store multiple things in Dapp's state.
     initialState = {
+        // The current quiz's contract
+        qContract: this._getInitQuizState(),
         // The user's address
         selectedAddress: undefined,
         question: undefined,
@@ -320,6 +322,34 @@ export class Dapp extends React.Component<{}, IState> {
         this.setState({loading: false})
     }
 
+    async _submitGuess(answer) {
+        try {
+            this.setState({loading: true});
+            const tx = await this.state.qContract.contract.guess(answer);
+            this.setState({txBeingSent: tx.hash});
+        } catch (error) {
+            this.setState({loading: false, transactionError: error});
+        } finally {
+            this.setState({txBeingSent: undefined});
+        }
+    }
+
+    async _fund(funding) {
+        try {
+            this.setState({loading: true});
+            const tx = await this._provider.getSigner(0)
+                .sendTransaction({
+                    to: this.state.qContract.address,
+                    value: ethers.utils.parseEther(funding)
+                })
+            this.setState({txBeingSent: tx.hash});
+        } catch (error) {
+            this.setState({loading: false, transactionError: error});
+        } finally {
+            this.setState({txBeingSent: undefined});
+        }
+    }
+
     // This method just clears part of the state.
     _dismissTransactionError() {
         this.setState({transactionError: undefined});
@@ -343,6 +373,16 @@ export class Dapp extends React.Component<{}, IState> {
     // This method resets the state
     _resetState() {
         this.setState(this.initialState);
+    }
+
+    // Reset quiz contract information
+    _getInitQuizState(): IQuiz {
+        return {
+            contract: undefined,
+            address: undefined,
+            balance: undefined,
+            question: undefined
+        }
     }
 
     // This method checks if Metamask selected network is Localhost:8545
