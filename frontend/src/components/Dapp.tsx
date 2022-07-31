@@ -20,6 +20,7 @@ import {CreateQuiz} from "./CreateQuiz";
 import {QuizData} from "../models/QuizData";
 import {Loading} from "./Loading";
 import {QuizNotFound} from "./QuizNotFound";
+import {IQuiz, IState} from "../models/DappState";
 
 // This is the Hardhat Network id that we set in our hardhat.config.js.
 // Here's a list of network ids https://docs.metamask.io/guide/ethereum-provider.html#properties
@@ -28,15 +29,6 @@ const HARDHAT_NETWORK_ID = '1337';
 
 // This is an error code that indicates that the user canceled a transaction
 const ERROR_CODE_TX_REJECTED_BY_USER = 4001;
-
-interface IState {
-    selectedAddress?: string;
-    question?: string;
-    loading?: boolean;
-    txBeingSent?: string;
-    transactionError?: Error;
-    networkError?: string;
-}
 
 // Since window.ethereum is not recognized by the TypeScript compiler,
 // we use this little hack
@@ -57,7 +49,6 @@ export class Dapp extends React.Component<{}, IState> {
         qContract: this._getInitQuizState(),
         // The user's address
         selectedAddress: undefined,
-        question: undefined,
         // The ID about transactions being sent, and any possible error with them
         txBeingSent: undefined,
         transactionError: undefined,
@@ -82,6 +73,9 @@ export class Dapp extends React.Component<{}, IState> {
         this._getRpcErrorMessage = this._getRpcErrorMessage.bind(this);
         this._resetState = this._resetState.bind(this);
         this._checkNetwork = this._checkNetwork.bind(this);
+        this._submitGuess = this._submitGuess.bind(this);
+        this._fund = this._fund.bind(this);
+        this._getInitQuizState = this._getInitQuizState.bind(this);
     }
 
     render() {
@@ -108,11 +102,11 @@ export class Dapp extends React.Component<{}, IState> {
             );
         }
 
-        // If the token data or the user's balance hasn't loaded yet, we show
-        // a loading component.
+        // If the Dapp hasn't loaded yet
         if (this.state.loading) {
             return <Loading/>;
         }
+
         // If everything is loaded, we render the application.
         return (
             <>
@@ -157,8 +151,9 @@ export class Dapp extends React.Component<{}, IState> {
                         <div className="tab-pane fade show active" id="quiz-tab-pane" role="tabpanel"
                              aria-labelledby="quiz-tab"
                              tabIndex={0}>
-                            { this.state.question ?
-                                <AnswerQuiz question={this.state.question}></AnswerQuiz>
+                            {this.state.qContract.question ?
+                                <AnswerQuiz quiz={this.state.qContract} submitGuess={this._submitGuess}
+                                            fund={this._fund}></AnswerQuiz>
                                 : <QuizNotFound/>
                             }
                         </div>
@@ -167,7 +162,7 @@ export class Dapp extends React.Component<{}, IState> {
                         </div>
                         <div className="tab-pane fade" id="closed-quiz-tab-pane" role="tabpanel"
                              aria-labelledby="closed-quiz-tab"
-                             tabIndex={0}>Closed Quiz
+                             tabIndex={2}>Closed Quiz
                         </div>
                     </div>
                 </div>
@@ -239,6 +234,8 @@ export class Dapp extends React.Component<{}, IState> {
             QuizFactoryArtefact.abi,
             this._provider.getSigner(0)
         );
+        const network = await this._provider.getNetwork();
+        console.log("network", network);
     }
 
     // This method sends an ethereum transaction to transfer tokens.
@@ -303,23 +300,39 @@ export class Dapp extends React.Component<{}, IState> {
     }
 
     async loadQuestion() {
-        this.setState({question: undefined, loading: true})
-        const questionAddresses: any[] = await this._quiz.getQuizzes();
+        this.setState({qContract: this._getInitQuizState(), loading: true})
+        try {
+            const questionAddresses: any[] = await this._quiz.getQuizzes();
+            for (let i = 0; i < questionAddresses.length; i++) {
+                let c = new ethers.Contract(
+                    questionAddresses[i],
+                    QuizGameArtefact.abi,
+                    this._provider.getSigner(0)
+                );
 
-        for (let i = 0; i < questionAddresses.length; i++) {
-            let qContract = new ethers.Contract(
-                questionAddresses[i],
-                QuizGameArtefact.abi,
-                this._provider.getSigner(0)
-            );
-            const quest = await qContract.question();
-            const solved = await qContract.solved();
-            if (!solved) {
-                this.setState({question: quest})
-                break
+                const quest = await c.question();
+                const solved = await c.solved();
+
+                if (!solved) {
+                    // value for answering correctly - comes as a BigNumber
+                    let value = Number(ethers.utils.formatEther(await this._provider.getBalance(questionAddresses[i])))
+                    const contract: IQuiz = {contract: c, question: quest, address: questionAddresses[i], balance: value}
+                    this.setState({qContract: contract})
+                    this.state.qContract.contract.on('QuizFunded', (b) => {
+                        value = Number(ethers.utils.formatEther(b));
+                        this.setState({loading: false, qContract: {...this.state.qContract, balance: value}})
+                    })
+                    this.state.qContract.contract.on('AnswerGuessed', () => {
+                        this.loadQuestion();
+                    })
+                    break
+                }
             }
+        } catch (error) {
+            this.setState({transactionError: error});
+        } finally {
+            this.setState({loading: false, txBeingSent: undefined});
         }
-        this.setState({loading: false})
     }
 
     async _submitGuess(answer) {
@@ -367,7 +380,12 @@ export class Dapp extends React.Component<{}, IState> {
             return error.data.message;
         }
 
-        return JSON.stringify(error.message).split('message')[2].replace(/[^a-zA-Z0-9' ]/g, "");
+        const errorMessage = JSON.stringify(error.message).split('message');
+        if (errorMessage.length >= 2) {
+            return errorMessage[2].replace(/[^a-zA-Z0-9' ]/g, "");
+        }
+
+        return error.message;
     }
 
     // This method resets the state
