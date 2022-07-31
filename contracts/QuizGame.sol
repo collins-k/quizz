@@ -15,7 +15,7 @@ contract QuizGame {
     }
 
     function guess(string calldata answer) public {
-        require(keccak256(abi.encodePacked(salt, answer)) == hashedAnswer);
+        require(keccak256(abi.encodePacked(salt, answer)) == hashedAnswer, "Your answer is not correct! Please try again");
         if (address(this).balance > 0) {
             emit AnswerGuessed();
             (bool sent, bytes memory data) = payable(msg.sender).call{value: address(this).balance}("");
