@@ -1,4 +1,6 @@
-import {useState} from "react";
+import React, { useState} from "react";
+import Lottie from "react-lottie-player";
+import {confetti} from "../utils";
 
 export function AnswerQuiz({quiz, submitGuess, fund}) {
 
@@ -6,6 +8,7 @@ export function AnswerQuiz({quiz, submitGuess, fund}) {
     const [funding, setFunding] = useState(0);
 
     function handleChange(event) {
+        quiz.isAnswerCorrect = undefined;
         setAnswer(event.target.value);
     }
 
@@ -26,7 +29,20 @@ export function AnswerQuiz({quiz, submitGuess, fund}) {
     }
 
     return (
-        <div className="card-container text-center">
+        <div className="card-container text-center"
+             style={{backgroundColor: quiz.isAnswerCorrect === false ? "#f9bec7" : quiz.isAnswerCorrect ? "#50c878" : "", position: "relative"}}>
+            {
+                quiz.isAnswerCorrect &&
+                <div style={{position: "absolute", left: "35%"}}>
+                    <Lottie
+                        loop
+                        animationData={confetti}
+                        play
+                        speed={1.5}
+                        style={{width: 200, height: 200}}
+                    />
+                </div>
+            }
             <div className="mb-4">
                 <h2>{quiz.question}</h2>
                 <p className="text-muted">
@@ -43,14 +59,16 @@ export function AnswerQuiz({quiz, submitGuess, fund}) {
                     onChange={handleChange}
                     className="form-control g-col-12 g-col-sm-9"
                 />
-                <button className="btn btn-primary g-col-12 g-col-sm-3" onClick={handleResponseSubmit} disabled={!answer}>Submit</button>
+                <button className="btn btn-primary g-col-12 g-col-sm-3" onClick={handleResponseSubmit}
+                        disabled={!answer}>Submit
+                </button>
             </div>
             <div className="grid gap-1 align-items-center justify-items-start">
                 <label htmlFor={answer} className="g-col-12 text-muted text-start">
                     {
-                       quiz.balance === 0 ?
-                           "You have to fund the question before answering"  :
-                           "You can add some ethers to this question"
+                        quiz.balance === 0 ?
+                            "You have to fund the question before answering" :
+                            "You can add some ethers to this question"
                     } </label>
                 <input
                     type="number"
@@ -60,7 +78,9 @@ export function AnswerQuiz({quiz, submitGuess, fund}) {
                     onChange={handleFundChange}
                     className="form-control g-col-12 g-col-sm-9"
                 />
-                <button className="btn btn-primary g-col-12 g-col-sm-3" onClick={handleFundSubmit} disabled={funding <= 0}>Fund</button>
+                <button className="btn btn-primary g-col-12 g-col-sm-3" onClick={handleFundSubmit}
+                        disabled={funding <= 0}>Fund
+                </button>
             </div>
         </div>
     )

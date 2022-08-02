@@ -36,7 +36,6 @@ declare let window: any;
 // This component is in charge of doing these things:
 //   1. It connects to the user's wallet
 //   2. Initializes ethers and the QuizFactory contract
-//   3. Polls the user balance to keep it updated.
 //   4. Create quizzes by sending transactions
 //   5. Fetch the next available quiz
 //   6. Renders the whole application
@@ -213,8 +212,6 @@ export class Dapp extends React.Component<{}, IState> {
             QuizFactoryArtefact.abi,
             this._provider.getSigner(0)
         );
-        const network = await this._provider.getNetwork();
-        console.log("network", network);
     }
 
     /**
@@ -270,14 +267,40 @@ export class Dapp extends React.Component<{}, IState> {
                 if (!solved) {
                     // value for answering correctly - comes as a BigNumber
                     let value = Number(ethers.utils.formatEther(await this._provider.getBalance(questionAddresses[i])))
-                    const contract: IQuiz = {contract: c, question: quest, address: questionAddresses[i], balance: value}
+                    const contract: IQuiz = {
+                        contract: c,
+                        question: quest,
+                        address: questionAddresses[i],
+                        balance: value,
+                        isAnswerCorrect: undefined
+                    }
                     this.setState({qContract: contract})
                     this.state.qContract.contract.on('QuizFunded', (b) => {
                         value = Number(ethers.utils.formatEther(b));
-                        this.setState({loading: false, qContract: {...this.state.qContract, balance: value}})
+                        this.setState({
+                            loading: false,
+                            transactionError: undefined,
+                            qContract: {...this.state.qContract, isAnswerCorrect: undefined, balance: value}
+                        })
                     })
                     this.state.qContract.contract.on('AnswerGuessed', () => {
-                        this.loadQuestion();
+                        this.setState({
+                            loading: false,
+                            transactionError: undefined,
+                            qContract: {...this.state.qContract, isAnswerCorrect: true}
+                        });
+                        // wait 5 sec before displaying the next question
+                        setTimeout(() => {
+                            this.loadQuestion();
+                            this.setState({qContract: {...this.state.qContract, isAnswerCorrect: undefined}});
+                        }, 5000)
+                    })
+                    this.state.qContract.contract.on('AnswerIncorrect', () => {
+                        this.setState({
+                            loading: false,
+                            transactionError: undefined,
+                            qContract: {...this.state.qContract, isAnswerCorrect: false}
+                        });
                     })
                     break
                 }
@@ -353,7 +376,8 @@ export class Dapp extends React.Component<{}, IState> {
             contract: undefined,
             address: undefined,
             balance: undefined,
-            question: undefined
+            question: undefined,
+            isAnswerCorrect: undefined,
         }
     }
 

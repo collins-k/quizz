@@ -12,4 +12,5 @@ export interface IQuiz {
     address?: string,
     question?: string,
     balance?: number,
+    isAnswerCorrect?: any,
 }
