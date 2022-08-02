@@ -6,8 +6,10 @@ contract QuizGame {
     bytes32 public hashedAnswer;
     string public question;
     bool public solved;
+
     event QuizFunded(uint256 amount);
     event AnswerGuessed();
+    event AnswerIncorrect();
 
     constructor(string memory _question, bytes32 _hashedAnswer) {
         question = _question;
@@ -15,12 +17,15 @@ contract QuizGame {
     }
 
     function guess(string calldata answer) public {
-        require(keccak256(abi.encodePacked(salt, answer)) == hashedAnswer, "Your answer is not correct! Please try again");
-        if (address(this).balance > 0) {
+        require(address(this).balance > 0, "You first have to fund the quiz");
+
+        if (keccak256(abi.encodePacked(salt, answer)) == hashedAnswer) {
             emit AnswerGuessed();
-            (bool sent, bytes memory data) = payable(msg.sender).call{value: address(this).balance}("");
+            (bool sent, bytes memory data) = payable(msg.sender).call{value : address(this).balance}("");
             require(sent, "Failed to send");
             solved = true;
+        } else {
+            emit AnswerIncorrect();
         }
     }
 
