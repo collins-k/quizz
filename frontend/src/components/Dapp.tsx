@@ -21,7 +21,7 @@ import {QuizData} from "../models/QuizData";
 import {Loading} from "./Loading";
 import {QuizNotFound} from "./QuizNotFound";
 import {IQuiz, IState} from "../models/DappState";
-import {getMumbaiNetworkConfig} from "../mumbai-network-config";
+import {getMumbaiNetworkConfig} from "../utils/mumbai-network-config";
 
 // This is the Hardhat Network id that we set in our hardhat.config.js for local development.
 const HARDHAT_NETWORK_ID = '1337';
@@ -111,7 +111,7 @@ export class Dapp extends React.Component<{}, IState> {
                         <li className="nav-item" role="presentation">
                             <button className="nav-link active" id="quiz-tab" data-bs-toggle="tab"
                                     data-bs-target="#quiz-tab-pane"
-                                    type="button" role="tab" aria-controls="quiz-tab-pane" aria-selected="true">Quiz
+                                    type="button" role="tab" aria-controls="quiz-tab-pane" aria-selected="true">Answer Quiz
                             </button>
                         </li>
                         <li className="nav-item" role="presentation">
@@ -122,13 +122,13 @@ export class Dapp extends React.Component<{}, IState> {
                                 Quiz
                             </button>
                         </li>
-                        <li className="nav-item" role="presentation">
+                    {/*    <li className="nav-item" role="presentation">
                             <button className="nav-link" id="closed-quiz-tab" data-bs-toggle="tab"
                                     data-bs-target="#closed-quiz-tab-pane"
                                     type="button" role="tab" aria-controls="closed-quiz-tab-pane"
                                     aria-selected="false">Closed Quizzes
                             </button>
-                        </li>
+                        </li>*/}
                     </ul>
                     {this.state.txBeingSent && (
                         <WaitingForTransactionMessage txHash={this.state.txBeingSent}/>
@@ -153,11 +153,11 @@ export class Dapp extends React.Component<{}, IState> {
                         </div>
                         <div className="tab-pane fade" id="create-tab-pane" role="tabpanel" aria-labelledby="create-tab"
                              tabIndex={1}><CreateQuiz addQuiz={this.addQuiz}/>
-                        </div>
+                        </div>{/*
                         <div className="tab-pane fade" id="closed-quiz-tab-pane" role="tabpanel"
                              aria-labelledby="closed-quiz-tab"
                              tabIndex={2}>Closed Quiz
-                        </div>
+                        </div>*/}
                     </div>
                 </div>
             </>

@@ -2,6 +2,7 @@ import {useState} from "react";
 import {ethers} from "ethers";
 import {Field} from "./forms/Fields";
 import {QuizData} from "../models/QuizData";
+import {formatQuestionAnswer} from "../utils/format-question-answer";
 const SALT = '123123123'; // Salt used in the QuizGame smart contract
 
 export function CreateQuiz({addQuiz}) {
@@ -16,16 +17,17 @@ export function CreateQuiz({addQuiz}) {
     }
 
     function handleSubmit(event) {
+        console.log(formatQuestionAnswer(formData.answer))
         event.preventDefault();
         const quiz: QuizData = {
             ...formData, answer: ethers.utils.keccak256(
                 ethers.utils.solidityPack(
                     ['bytes32', 'string'],
-                    [ethers.utils.formatBytes32String(SALT), formData.answer]
+                    [ethers.utils.formatBytes32String(SALT), formatQuestionAnswer(formData.answer)]
                 )
             )
         }
-        addQuiz(quiz)
+      //  addQuiz(quiz)
     }
 
     return (

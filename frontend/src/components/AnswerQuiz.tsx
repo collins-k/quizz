@@ -1,6 +1,7 @@
 import React, { useState} from "react";
 import Lottie from "react-lottie-player";
 import {confetti} from "../utils";
+import {formatQuestionAnswer} from "../utils/format-question-answer";
 
 export function AnswerQuiz({quiz, submitGuess, fund}) {
 
@@ -18,7 +19,7 @@ export function AnswerQuiz({quiz, submitGuess, fund}) {
 
     function handleResponseSubmit(event) {
         event.preventDefault();
-        submitGuess(answer);
+        submitGuess(formatQuestionAnswer(answer));
         setAnswer("");
     }
 
