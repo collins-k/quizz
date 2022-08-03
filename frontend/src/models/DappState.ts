@@ -5,6 +5,7 @@ export interface IState {
     txBeingSent?: string;
     transactionError?: Error;
     networkError?: string;
+    networkName?: string
 }
 
 export interface IQuiz {

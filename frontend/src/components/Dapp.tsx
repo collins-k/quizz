@@ -21,6 +21,7 @@ import {QuizData} from "../models/QuizData";
 import {Loading} from "./Loading";
 import {QuizNotFound} from "./QuizNotFound";
 import {IQuiz, IState} from "../models/DappState";
+import {getMumbaiNetworkConfig} from "../mumbai-network-config";
 
 // This is the Hardhat Network id that we set in our hardhat.config.js for local development.
 const HARDHAT_NETWORK_ID = '1337';
@@ -51,6 +52,7 @@ export class Dapp extends React.Component<{}, IState> {
         txBeingSent: undefined,
         transactionError: undefined,
         networkError: undefined,
+        networkName: "Localhost 8545",
     };
     // We'll use ethers to interact with the Ethereum network and our contract
     private _provider: ethers.providers.Web3Provider;
@@ -74,6 +76,7 @@ export class Dapp extends React.Component<{}, IState> {
         this._submitGuess = this._submitGuess.bind(this);
         this._fund = this._fund.bind(this);
         this._getInitQuizState = this._getInitQuizState.bind(this);
+        this._switchNetwork = this._switchNetwork.bind(this);
     }
 
     render() {
@@ -102,7 +105,7 @@ export class Dapp extends React.Component<{}, IState> {
         return (
             <>
                 <Navbar address={this.state.selectedAddress}
-                        networkName={"Localhost 8545"}/>
+                        networkName={this.state.networkName}/>
                 <div className="container">
                     <ul className="nav nav-tabs justify-content-center" id="myTab" role="tablist">
                         <li className="nav-item" role="presentation">
@@ -212,6 +215,10 @@ export class Dapp extends React.Component<{}, IState> {
             QuizFactoryArtefact.abi,
             this._provider.getSigner(0)
         );
+        const network = await this._provider.getNetwork();
+        if (network.chainId.toString() !== HARDHAT_NETWORK_ID) {
+            this.setState({networkName: network.name})
+        }
     }
 
     /**
@@ -381,16 +388,29 @@ export class Dapp extends React.Component<{}, IState> {
         }
     }
 
-    // This method checks if Metamask selected network is correct. Locally Localhost:8545
+    /**
+     * Check if the Metamask selected network is correct
+     * If not propose the user to switch to the mumbai testnet
+     */
     _checkNetwork() {
         const network = window.ethereum.networkVersion;
         if (network === HARDHAT_NETWORK_ID || network === POLYGON_NETWORK_ID) {
             return true;
+        } else {
+            this._switchNetwork().then();
         }
-
-        this.setState({
-            networkError: 'Please select the matic mumbai testnet in your wallet'
-        });
         return false;
+    }
+
+    /**
+     * Automatically switch to mumbai network and login
+     */
+    async _switchNetwork() {
+        this.setState({networkError: 'Please confirm the matic mumbai testnet in your wallet'});
+        await window.ethereum.request({
+            method: "wallet_addEthereumChain",
+            params: getMumbaiNetworkConfig()
+        });
+        this._connectWallet().then()
     }
 }
