@@ -17,7 +17,6 @@ export function CreateQuiz({addQuiz}) {
     }
 
     function handleSubmit(event) {
-        console.log(formatQuestionAnswer(formData.answer))
         event.preventDefault();
         const quiz: QuizData = {
             ...formData, answer: ethers.utils.keccak256(
@@ -27,7 +26,7 @@ export function CreateQuiz({addQuiz}) {
                 )
             )
         }
-      //  addQuiz(quiz)
+        addQuiz(quiz)
     }
 
     return (

@@ -122,7 +122,7 @@ export class Dapp extends React.Component<{}, IState> {
                                 Quiz
                             </button>
                         </li>
-                    {/*    <li className="nav-item" role="presentation">
+                        {/*    <li className="nav-item" role="presentation">
                             <button className="nav-link" id="closed-quiz-tab" data-bs-toggle="tab"
                                     data-bs-target="#closed-quiz-tab-pane"
                                     type="button" role="tab" aria-controls="closed-quiz-tab-pane"
@@ -153,7 +153,8 @@ export class Dapp extends React.Component<{}, IState> {
                         </div>
                         <div className="tab-pane fade" id="create-tab-pane" role="tabpanel" aria-labelledby="create-tab"
                              tabIndex={1}><CreateQuiz addQuiz={this.addQuiz}/>
-                        </div>{/*
+                        </div>
+                        {/*
                         <div className="tab-pane fade" id="closed-quiz-tab-pane" role="tabpanel"
                              aria-labelledby="closed-quiz-tab"
                              tabIndex={2}>Closed Quiz
@@ -411,6 +412,5 @@ export class Dapp extends React.Component<{}, IState> {
             method: "wallet_addEthereumChain",
             params: getMumbaiNetworkConfig()
         });
-        this._connectWallet().then()
     }
 }
