@@ -1,4 +1,4 @@
-# Hardhat Boilerplate
+# Quiz Game
 [project-demo]: quiz.gif
 ![project-demo]
 This repository contains a sample project that you can use as the starting point
