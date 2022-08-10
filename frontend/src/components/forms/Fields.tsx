@@ -6,6 +6,7 @@ export function Field({name, value, onChange, children = null}) {
             <div className="g-col-12 g-col-sm-9 g-col-md-10">
                 <input
                     type="text"
+                    autoComplete="off"
                     id={name}
                     name={name}
                     value={value}

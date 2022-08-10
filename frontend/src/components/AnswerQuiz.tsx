@@ -54,6 +54,7 @@ export function AnswerQuiz({quiz, submitGuess, fund}) {
             <div className="grid gap-1 align-items-center justify-items-start mb-5">
                 <input
                     type="text"
+                    autoComplete="off"
                     id="answer"
                     name="answer"
                     value={answer}
@@ -73,6 +74,7 @@ export function AnswerQuiz({quiz, submitGuess, fund}) {
                     } </label>
                 <input
                     type="number"
+                    autoComplete="off"
                     id="funding"
                     name="funding"
                     value={funding}
